@@ -5,10 +5,13 @@ Werkzeug Documentation:  https://werkzeug.palletsprojects.com/
 This file creates your application.
 """
 
-from app import app
-from flask import render_template, request, jsonify, send_file
+from app import app, db
+from flask import flash, render_template, request, jsonify, send_file
 import os
-
+from app.forms import MovieForm
+from werkzeug.utils import secure_filename
+from datetime import datetime
+from flask import jsonify 
 
 ###
 # Routing for your application.
@@ -22,6 +25,44 @@ def index():
 ###
 # The functions below should be applicable to all Flask apps.
 ###
+
+@app.route('/api/v1/movies', methods=['POST'])
+def movies():
+    form=MovieForm()
+    if form.validate_on_submit():
+        # print('LOL')
+        # process the data
+        title=form.title.data    
+        description=form.description.data   
+        photo=form.poster.data
+           
+        # print('LOL2')      
+        filename = secure_filename(photo.filename)
+        print("UPLOAD FOLDER:", app.config.get('UPLOAD_FOLDER'))
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+        path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        print("Saving to:", path)
+
+        photo.save(path)
+        date = datetime.now()
+        # Get file data and save to your uploads folder
+        flash('File Saved', 'success')
+        movie = movies(title=title, description=description, poster=photo, created_at=date)
+        db.session.add(movie)         
+        db.session.commit()
+
+        the_json_responce=[{ "message": "Movie Successfully added",
+                             "title": title, 
+                             "poster": filename, 
+                             "description": description }]
+        return jsonify(responce=the_json_responce)
+        # return redirect(url_for('dis_props'))
+    else:
+        errors=form_errors(form)
+        the_json_responce={"errors": errors}
+        return jsonify(responce=the_json_responce)
+
 
 # Here we define a function to collect form errors from Flask-WTF
 # which we can later use
