@@ -12,6 +12,8 @@ from app.forms import MovieForm
 from werkzeug.utils import secure_filename
 from datetime import datetime
 from flask import jsonify 
+from app.models import Movies
+from flask_wtf.csrf import generate_csrf
 
 ###
 # Routing for your application.
@@ -25,18 +27,23 @@ def index():
 ###
 # The functions below should be applicable to all Flask apps.
 ###
+@app.route('/api/v1/csrf-token', methods=['GET'])
+def get_csrf():
+    return jsonify({'csrf_token': generate_csrf()})
+
 
 @app.route('/api/v1/movies', methods=['POST'])
 def movies():
     form=MovieForm()
+    print('LOL')
     if form.validate_on_submit():
-        # print('LOL')
+
         # process the data
         title=form.title.data    
         description=form.description.data   
         photo=form.poster.data
            
-        # print('LOL2')      
+        print('LOL2')      
         filename = secure_filename(photo.filename)
         print("UPLOAD FOLDER:", app.config.get('UPLOAD_FOLDER'))
         os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -48,20 +55,25 @@ def movies():
         date = datetime.now()
         # Get file data and save to your uploads folder
         flash('File Saved', 'success')
-        movie = movies(title=title, description=description, poster=photo, created_at=date)
+        movie = Movies(title=title, description=description, poster=filename, created_at=date)
         db.session.add(movie)         
         db.session.commit()
 
-        the_json_responce=[{ "message": "Movie Successfully added",
+        responce=[{ "message": "Movie Successfully added",
                              "title": title, 
                              "poster": filename, 
                              "description": description }]
-        return jsonify(responce=the_json_responce)
+        print(responce)
+        return jsonify({ "message": "Movie Successfully added",
+                             "title": title, 
+                             "poster": filename, 
+                             "description": description }), 200
         # return redirect(url_for('dis_props'))
     else:
         errors=form_errors(form)
-        the_json_responce={"errors": errors}
-        return jsonify(responce=the_json_responce)
+        print("FORM ERRORS:", errors)
+        # responce={"errors": errors}
+        return jsonify(errors=errors),400
 
 
 # Here we define a function to collect form errors from Flask-WTF
