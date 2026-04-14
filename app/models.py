@@ -18,3 +18,12 @@ class Movies(db.Model):
         
     def __repr__(self): 
         return f'<Property {self.title}>' 
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "poster": self.poster,
+            "created_at": self.created_at.isoformat() if self.created_at else None
+        }

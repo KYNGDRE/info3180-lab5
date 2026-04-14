@@ -10,6 +10,7 @@ from flask import flash, render_template, request, jsonify, send_file
 import os
 from app.forms import MovieForm
 from werkzeug.utils import secure_filename
+from flask import send_from_directory
 from datetime import datetime
 from flask import jsonify 
 from app.models import Movies
@@ -31,49 +32,92 @@ def index():
 def get_csrf():
     return jsonify({'csrf_token': generate_csrf()})
 
+# @app.route('/api/v1/movies', methods=['GET'])
+# def movie():
+#     if request.method == "GET":
+#         # all_movies = Movies.query.all()
 
-@app.route('/api/v1/movies', methods=['POST'])
+#         # results = []
+#         # for m in all_movies:
+#         #     results.append({
+#         #         "id": m.id,
+#         #         "title": m.title,
+#         #         "description": m.description,
+#         #         "poster": m.poster,
+#         #         "created_at": m.created_at
+#         #     })
+
+#         # return jsonify(movies=results), 200
+#         movies = Movies.query.all()
+#         print("MOVIES FROM DB:", movies)
+#         return jsonify({"movies": [m.to_dict() for m in movies]})
+
+
+@app.route('/api/v1/movies', methods=['GET','POST'])
 def movies():
-    form=MovieForm()
-    print('LOL')
-    if form.validate_on_submit():
+    if request.method == "GET":
+        # all_movies = Movies.query.all()
 
-        # process the data
-        title=form.title.data    
-        description=form.description.data   
-        photo=form.poster.data
-           
-        print('LOL2')      
-        filename = secure_filename(photo.filename)
-        print("UPLOAD FOLDER:", app.config.get('UPLOAD_FOLDER'))
-        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+        # results = []
+        # for m in all_movies:
+        #     results.append({
+        #         "id": m.id,
+        #         "title": m.title,
+        #         "description": m.description,
+        #         "poster": m.poster,
+        #         "created_at": m.created_at
+        #     })
 
-        path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        print("Saving to:", path)
+        # return jsonify(movies=results), 200
+        movies = Movies.query.all()
+        print("MOVIES FROM DB:", movies)
+        return jsonify({"movies": [m.to_dict() for m in movies]})
 
-        photo.save(path)
-        date = datetime.now()
-        # Get file data and save to your uploads folder
-        flash('File Saved', 'success')
-        movie = Movies(title=title, description=description, poster=filename, created_at=date)
-        db.session.add(movie)         
-        db.session.commit()
-
-        responce=[{ "message": "Movie Successfully added",
-                             "title": title, 
-                             "poster": filename, 
-                             "description": description }]
-        print(responce)
-        return jsonify({ "message": "Movie Successfully added",
-                             "title": title, 
-                             "poster": filename, 
-                             "description": description }), 200
-        # return redirect(url_for('dis_props'))
     else:
-        errors=form_errors(form)
-        print("FORM ERRORS:", errors)
-        # responce={"errors": errors}
-        return jsonify(errors=errors),400
+        form=MovieForm()
+        print('LOL')
+        if form.validate_on_submit():
+
+            # process the data
+            title=form.title.data    
+            description=form.description.data   
+            photo=form.poster.data
+            
+            print('LOL2')      
+            filename = secure_filename(photo.filename)
+            print("UPLOAD FOLDER:", app.config.get('UPLOAD_FOLDER'))
+            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+            path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            print("Saving to:", path)
+
+            photo.save(path)
+            date = datetime.now()
+            # Get file data and save to your uploads folder
+            flash('File Saved', 'success')
+            movie = Movies(title=title, description=description, poster=filename, created_at=date)
+            db.session.add(movie)         
+            db.session.commit()
+
+            responce=[{ "message": "Movie Successfully added",
+                                "title": title, 
+                                "poster": filename, 
+                                "description": description }]
+            print(responce)
+            return jsonify({ "message": "Movie Successfully added",
+                                "title": title, 
+                                "poster": filename, 
+                                "description": description }), 200
+            # return redirect(url_for('dis_props'))
+        else:
+            errors=form_errors(form)
+            print("FORM ERRORS:", errors)
+            # responce={"errors": errors}
+            return jsonify(errors=errors),400
+
+@app.route('/uploads/<filename>')
+def get_image(filename):
+    return send_from_directory(os.path.join(os.getcwd(),app.config['UPLOAD_FOLDER']), filename)
 
 
 # Here we define a function to collect form errors from Flask-WTF
@@ -96,7 +140,6 @@ def send_text_file(file_name):
     """Send your static text file."""
     file_dot_text = file_name + '.txt'
     return app.send_static_file(file_dot_text)
-
 
 @app.after_request
 def add_header(response):

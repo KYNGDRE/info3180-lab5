@@ -11,15 +11,15 @@
     {{ error }}
   </li>
 </ul>
-    <form @submit.prevent="saveMovie"  method="post" enctype="multipart/form-data"> 
+    <form @submit.prevent="saveMovie" background_colour="purple" method="post" enctype="multipart/form-data"  style="padding: 30px;"> 
         <!-- action="/api/v1/movies"      -->
         <div class="form-group mb-3">
             <label for="title" class="form-label">Movie Title</label>
-            <input type="text" name="title" class="form-control" />
+            <input type="text" name="title" class="form-control" rows="0"/>
         </div>  
         <div class="form-group mb-3">         
             <label for="description">Message:</label>         
-            <textarea id="description" name="description"></textarea>     
+            <textarea id="description" name="description" rows="10" cols="50"></textarea>     
         </div>    
         <div class="form-group mb-3">         
             <!-- <label for="mail">E-mail:</label>         
